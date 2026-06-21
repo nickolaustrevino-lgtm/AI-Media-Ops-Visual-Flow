@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Operational Flow · Moonrock Media Team · Nick Trevino</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Condensed:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+:root{
+  --dark:#0d3535;--dark-mid:#0e4a4a;--teal:#1a7a6e;--teal-bright:#00c9a7;
+  --green:#00e676;--green-mid:#00c853;--mag:#e040fb;--mag-dim:#f5d0fc;
+  --bg:#eef5f8;--bg-card:#f7fbfc;--white:#fff;
+  --text:#0d1f1f;--muted:#4a6868;--faint:#8aacac;--border:#c5dde0;
+  --font:'Roboto',system-ui,sans-serif;--font-cond:'Roboto Condensed','Roboto',sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* ── SCROLL PROGRESS ── */
+.spb-wrap{position:fixed;inset:0 0 auto;height:3px;z-index:200}
+.spb{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--green),var(--mag));transition:width 60ms linear}
+
+/* ── HEADER ── */
+.site-header{
+  background:var(--dark);
+  padding:20px 40px 0;
+  position:relative;overflow:hidden;
+}
+.header-bubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.header-bubbles span{
+  position:absolute;border-radius:50%;
+  background:var(--mag);opacity:.18;
+  animation:float 8s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-12px) scale(1.04)}}
+.header-inner{position:relative;z-index:3;display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.logo-wrap{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.logo-img{height:36px;filter:brightness(0) invert(1)}
+.logo-dot{width:5px;height:5px;border-radius:50%;background:var(--green);margin-top:2px}
+.header-meta{text-align:right}
+.header-badge{
+  display:inline-block;padding:4px 10px;border-radius:20px;
+  background:rgba(224,64,251,.22);border:1px solid rgba(224,64,251,.4);
+  font:700 9px/1 var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--mag);
+  margin-bottom:8px;
+}
+.header-name{font:700 15px/1 var(--font);color:#fff}
+.header-role{font:400 12px/1 var(--font);color:rgba(255,255,255,.7);margin-top:3px}
+.header-title-block{padding-bottom:28px}
+.header-eyebrow{font:700 11px/1 var(--font);letter-spacing:.14em;text-transform:uppercase;color:var(--teal-bright);margin-bottom:10px}
+.header-h1{font:900 38px/1.1 var(--font-cond);color:#fff;text-transform:uppercase;letter-spacing:-.01em}
+.header-h1 em{font-style:normal;color:var(--green)}
+.header-sub{font:400 15px/1.55 var(--font);color:rgba(255,255,255,.82);margin-top:10px;max-width:560px}
+.header-stats{
+  display:flex;gap:0;border-top:1px solid rgba(255,255,255,.1);
+  margin-top:20px;position:relative;z-index:3;
+}
+.hstat{flex:1;padding:14px 0;border-right:1px solid rgba(255,255,255,.1);text-align:center}
+.hstat:last-child{border-right:none}
+.hstat-num{font:900 28px/1 var(--font-cond);color:var(--green)}
+.hstat-label{font:400 12px/1.3 var(--font);color:rgba(255,255,255,.7);margin-top:5px}
+
+/* ── TAB NAV ── */
+.tab-nav{
+  display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+  background:var(--dark-mid);border-bottom:2px solid rgba(255,255,255,.06);
+  position:sticky;top:0;z-index:100;
+}
+.tab-nav::-webkit-scrollbar{display:none}
+.tab-btn{
+  appearance:none;border:none;background:transparent;
+  padding:14px 22px;cursor:pointer;white-space:nowrap;
+  font:700 12px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(255,255,255,.6);border-bottom:2px solid transparent;margin-bottom:-2px;
+  transition:color .2s,border-color .2s;
+}
+.tab-btn:hover{color:rgba(255,255,255,.8)}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green)}
+
+/* ── MAIN CONTENT ── */
+.main{padding:32px 40px 60px;max-width:1280px;margin:0 auto}
+
+/* ── TAB PANELS ── */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── SECTION TITLE ── */
+.sec-title{
+  font:900 13px/1 var(--font-cond);letter-spacing:.14em;text-transform:uppercase;
+  color:#2a4a4a;margin-bottom:20px;display:flex;align-items:center;gap:10px;
+}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── MASTER FLOW DIAGRAM ── */
+.flow-diagram{
+  background:var(--white);border-radius:16px;
+  border:1px solid var(--border);
+  box-shadow:0 4px 20px rgba(13,53,53,.07);
+  padding:32px;overflow-x:auto;
+}
+
+/* ── SWIMLANE ── */
+.swimlane-wrap{min-width:900px}
+.swimlane{display:grid;grid-template-columns:120px 1fr;gap:0;margin-bottom:0}
+.swimlane+.swimlane{border-top:1px solid #eef3f4}
+.lane-label{
+  padding:20px 16px 20px 0;display:flex;align-items:flex-start;
+  font:700 11px/1.3 var(--font);letter-spacing:.08em;text-transform:uppercase;
+  color:#2a4a4a;border-right:2px solid var(--border);
+  position:relative;
+}
+.lane-label-inner{
+  writing-mode:horizontal-tb;
+  display:flex;flex-direction:column;gap:4px;
+}
+.lane-dot{width:8px;height:8px;border-radius:50%;margin-bottom:4px}
+.lane-body{padding:20px 0 20px 20px;display:flex;align-items:center;gap:0;position:relative}
+
+/* ── FLOW NODES ── */
+.fn-group{display:flex;align-items:center;gap:0;position:relative}
+.fn-connector{
+  width:32px;height:2px;background:var(--border);position:relative;flex-shrink:0;
+}
+.fn-connector::after{
+  content:'';position:absolute;right:-5px;top:-4px;
+  border:5px solid transparent;border-left-color:var(--border);
+}
+.fn-connector.c-green{background:var(--green-mid)}
+.fn-connector.c-green::after{border-left-color:var(--green-mid)}
+.fn-connector.c-mag{background:var(--mag)}
+.fn-connector.c-mag::after{border-left-color:var(--mag)}
+.fn-connector.c-teal{background:var(--teal-bright)}
+.fn-connector.c-teal::after{border-left-color:var(--teal-bright)}
+
+.fn{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:pointer;position:relative;
+  transition:transform .2s;
+}
+.fn:hover{transform:translateY(-3px)}
+.fn:hover .fn-card{box-shadow:0 8px 24px rgba(13,53,53,.14);border-color:var(--teal-bright)}
+.fn-card{
+  width:96px;padding:11px 9px;border-radius:10px;
+  background:var(--bg-card);border:1.5px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  transition:box-shadow .2s,border-color .2s;
+  position:relative;
+}
+.fn-card.fc-dark{background:var(--dark);border-color:var(--dark)}
+.fn-card.fc-green{background:#e8fdf2;border-color:var(--green-mid)}
+.fn-card.fc-mag{background:#fdf0ff;border-color:var(--mag)}
+.fn-card.fc-teal{background:#e6f9f6;border-color:var(--teal-bright)}
+.fn-card.fc-trigger{background:linear-gradient(135deg,var(--dark),var(--dark-mid));border-color:var(--teal-bright)}
+
+.fn-icon{
+  width:32px;height:32px;border-radius:8px;
+  display:grid;place-items:center;font-size:16px;
+  flex-shrink:0;
+}
+.fn-icon img{width:22px;height:22px;object-fit:contain}
+.fn-icon.ic-dark{background:rgba(255,255,255,.12)}
+.fn-icon.ic-green{background:rgba(0,200,83,.15)}
+.fn-icon.ic-mag{background:rgba(224,64,251,.12)}
+.fn-icon.ic-teal{background:rgba(0,201,167,.15)}
+.fn-icon.ic-white{background:rgba(255,255,255,.9)}
+
+.fn-name{font:700 10px/1.2 var(--font);text-align:center;color:var(--text)}
+.fn-card.fc-dark .fn-name,.fn-card.fc-trigger .fn-name{color:#fff}
+.fn-sub{font:400 9px/1.2 var(--font);text-align:center;color:#3a5a5a}
+.fn-card.fc-dark .fn-sub,.fn-card.fc-trigger .fn-sub{color:rgba(255,255,255,.55)}
+
+.fn-badge{
+  position:absolute;top:-7px;right:-7px;
+  background:var(--mag);color:#fff;
+  font:700 7px/1 var(--font);padding:2px 5px;border-radius:10px;
+  white-space:nowrap;
+}
+.fn-badge.b-green{background:var(--green-mid);color:var(--dark)}
+.fn-badge.b-teal{background:var(--teal-bright);color:var(--dark)}
+
+/* ── TOOLTIP ── */
+.fn-tooltip{
+  position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
+  background:var(--dark);color:#fff;border-radius:8px;
+  padding:10px 12px;width:200px;z-index:50;
+  font:400 10px/1.45 var(--font);
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+  pointer-events:none;opacity:0;transition:opacity .15s;
+}
+.fn-tooltip::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--dark);
+}
+.fn:hover .fn-tooltip{opacity:1}
+.fn-tooltip strong{color:var(--green);display:block;margin-bottom:4px;font-size:10.5px}
+
+/* ── VERTICAL CONNECTOR ── */
+.vc-wrap{display:flex;justify-content:center;align-items:center;height:20px;padding-left:120px}
+.vc{width:2px;height:20px;background:var(--border);position:relative;margin:0 auto}
+.vc::after{
+  content:'';position:absolute;bottom:-5px;left:-4px;
+  border:5px solid transparent;border-top-color:var(--border);
+}
+.vc.vc-green{background:var(--green-mid)}
+.vc.vc-green::after{border-top-color:var(--green-mid)}
+.vc.vc-mag{background:var(--mag)}
+.vc.vc-mag::after{border-top-color:var(--mag)}
+
+/* ── LEGEND ── */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:6px;font:400 12px/1 var(--font);color:#2a4a4a}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+/* ── WORKFLOW CARDS (Panel 2) ── */
+.wf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.wf-card{
+  background:var(--white);border-radius:14px;border:1px solid var(--border);
+  box-shadow:0 2px 10px rgba(13,53,53,.06);overflow:hidden;
+  transition:transform .2s,box-shadow .2s;cursor:pointer;
+}
+.wf-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(13,53,53,.12)}
+.wf-card-head{
+  padding:16px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+}
+.wf-num{
+  width:32px;height:32px;border-radius:8px;
+  display:grid;place-items:center;
+  font:900 14px/1 var(--font-cond);flex-shrink:0;
+}
+.wf-card-title{font:700 14px/1.3 var(--font);color:var(--dark)}
+.wf-card-body{padding:14px 18px}
+.wf-step{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:8px 0;border-bottom:1px solid #f0f5f6;font:400 12px/1.45 var(--font);color:#2a4a4a;
+}
+.wf-step:last-child{border-bottom:none}
+.wf-step-num{
+  width:18px;height:18px;border-radius:50%;
+  display:grid;place-items:center;flex-shrink:0;
+  font:700 8px/1 var(--font);margin-top:1px;
+}
+.wf-tools{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;border-top:1px solid var(--border)}
+.wf-tool-chip{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 9px;border-radius:20px;
+  background:var(--bg);border:1px solid var(--border);
+  font:500 11px/1 var(--font);color:#2a4a4a;
+}
+.wf-tool-chip img{width:14px;height:14px;object-fit:contain}
+
+/* ── TOOL STACK PANEL ── */
+.tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.tool-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.tool-grid{grid-template-columns:1fr}}
+.tool-col-head{
+  padding:14px 18px;border-radius:12px 12px 0 0;
+  font:700 12px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;
+}
+.tool-col{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 2px 10px rgba(13,53,53,.05)}
+.tool-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-bottom:1px solid #f0f5f6;
+  transition:background .15s;
+}
+.tool-row:last-child{border-bottom:none}
+.tool-row:hover{background:#f5fafb}
+.tool-logo-box{
+  width:36px;height:36px;border-radius:9px;
+  display:grid;place-items:center;flex-shrink:0;
+  border:1px solid var(--border);background:#fff;
+}
+.tool-logo-box img{width:24px;height:24px;object-fit:contain}
+.tool-logo-ph{
+  width:36px;height:36px;border-radius:9px;
+  display:grid;place-items:center;flex-shrink:0;
+  font:900 14px/1 var(--font-cond);color:#fff;
+}
+.tool-info-name{font:700 13px/1 var(--font);color:var(--dark)}
+.tool-info-use{font:400 11.5px/1.4 var(--font);color:#2a4a4a;margin-top:3px}
+.tool-info-tag{
+  display:inline-block;margin-top:5px;
+  padding:3px 8px;border-radius:10px;
+  font:700 10px/1 var(--font);
+}
+
+/* ── IMPACT PANEL ── */
+.impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+@media(max-width:700px){.impact-grid{grid-template-columns:1fr 1fr}}
+.impact-card{
+  background:var(--white);border-radius:14px;border:1px solid var(--border);
+  padding:24px 22px;box-shadow:0 2px 10px rgba(13,53,53,.05);overflow:hidden;position:relative;
+}
+.impact-num{font:900 40px/1 var(--font-cond);letter-spacing:-.02em;position:relative;z-index:2}
+.impact-label{font:500 13px/1.4 var(--font);color:#1a3535;margin-top:8px;position:relative;z-index:2}
+.impact-ctx{font:400 11.5px/1.35 var(--font);color:#3a5a5a;margin-top:5px;position:relative;z-index:2}
+.impact-tag{
+  display:inline-block;margin-top:10px;padding:4px 10px;border-radius:20px;
+  font:700 10px/1 var(--font);position:relative;z-index:2;
+}
+
+.timeline{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:24px;box-shadow:0 2px 10px rgba(13,53,53,.05)}
+.timeline-title{font:700 13px/1 var(--font);letter-spacing:.1em;text-transform:uppercase;color:#1a3535;margin-bottom:18px}
+.tl-row{display:grid;grid-template-columns:90px 24px 1fr;gap:0;position:relative;padding-bottom:24px;align-items:start}
+.tl-row:last-child{padding-bottom:0}
+.tl-row::before{
+  content:'';position:absolute;left:calc(90px + 11px);top:20px;bottom:0;
+  width:2px;background:var(--border);
+}
+.tl-row:last-child::before{display:none}
+.tl-time{font:700 11px/1.3 var(--font);color:#2a4a4a;padding-top:3px;text-align:right;padding-right:0;white-space:nowrap}
+.tl-dot-col{display:flex;flex-direction:column;align-items:center;padding:0 4px}
+.tl-dot{
+  position:relative;left:auto;top:auto;
+  width:18px;height:18px;border-radius:50%;flex-shrink:0;
+  border:2px solid var(--white);
+  box-shadow:0 0 0 2px var(--border);
+  margin-top:1px;
+}
+.tl-content{padding-left:12px}
+.tl-content-title{font:700 14px/1.3 var(--font);color:var(--dark)}
+.tl-content-desc{font:400 12.5px/1.5 var(--font);color:#2a4a4a;margin-top:5px}
+.tl-tools{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.tl-chip{
+  padding:3px 9px;border-radius:10px;
+  font:500 10.5px/1 var(--font);
+}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(12px)}
+.reveal.vis{opacity:1;transform:none;transition:opacity .4s ease,transform .4s ease}
+
+/* ── FOOTER ── */
+.doc-footer{
+  background:var(--dark);color:rgba(255,255,255,.6);
+  padding:16px 40px;display:flex;justify-content:space-between;align-items:center;
+  font:400 12px/1 var(--font);
+}
+.doc-footer strong{color:rgba(255,255,255,.8)}
+</style>
+</head>
+<body>
+
+<div class="spb-wrap"><span class="spb" id="spb"></span></div>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-bubbles" id="bubbles"></div>
+  <div class="header-inner">
+    <div>
+      <div class="logo-wrap">
+        <img src="pxlogo.png" alt="PX" class="logo-img">
+        <span class="logo-dot"></span>
+      </div>
+      <div class="header-title-block">
+        <div class="header-eyebrow">AI Operational Flow · Moonrock Media Team</div>
+        <h1 class="header-h1">From Execution<br>to <em>Strategy</em></h1>
+        <p class="header-sub">A visual map of the AI systems, tools, and workflows built to reclaim 70% of team time and redirect it toward the work that retains clients for 8 years.</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="header-badge">Internal Reference</div>
+      <div class="header-name">Nickolaus Trevino</div>
+      <div class="header-role">VP of Media Candidate · PX.com</div>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-num">70%</div><div class="hstat-label">Team hours reclaimed</div></div>
+    <div class="hstat"><div class="hstat-num">30min</div><div class="hstat-label">Daily execution check</div></div>
+    <div class="hstat"><div class="hstat-num">4</div><div class="hstat-label">Distinct AI workflows</div></div>
+    <div class="hstat"><div class="hstat-num">12</div><div class="hstat-label">Tools in stack</div></div>
+    <div class="hstat"><div class="hstat-num">8yr</div><div class="hstat-label">Epic Games retained</div></div>
+  </div>
+</header>
+
+<!-- TAB NAV -->
+<nav class="tab-nav" id="tabNav">
+  <button class="tab-btn active" data-tab="flow">Master Flow Diagram</button>
+  <button class="tab-btn" data-tab="workflows">Workflow Breakdown</button>
+  <button class="tab-btn" data-tab="tools">AI Tool Stack</button>
+  <button class="tab-btn" data-tab="impact">Impact and Timeline</button>
+</nav>
+
+<main class="main">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- PANEL 1: MASTER FLOW DIAGRAM -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-flow">
+    <div class="sec-title">End-to-End Operational Flow</div>
+
+    <div class="flow-diagram reveal">
+      <div class="swimlane-wrap">
+
+        <!-- LANE 1: DATA INPUTS -->
+        <div class="swimlane">
+          <div class="lane-label">
+            <div class="lane-label-inner">
+              <div class="lane-dot" style="background:#00e676"></div>
+              Data<br>Inputs
+            </div>
+          </div>
+          <div class="lane-body">
+            <div class="fn-group">
+              <div class="fn" tabindex="0">
+                <div class="fn-card fc-trigger">
+                  <div class="fn-icon ic-dark">📡</div>
+                  <div class="fn-name">Platform APIs</div>
+                  <div class="fn-sub">Google · Meta · TikTok · LinkedIn</div>
+                  <div class="fn-badge b-teal">Sunday 11pm</div>
+                </div>
+                <div class="fn-tooltip"><strong>Trigger: Automated Data Pull</strong>All four platforms sync simultaneously every Sunday at 11pm via API connections. No manual export required.</div>
+              </div>
+              <div class="fn-connector c-green"></div>
+              <div class="fn">
+                <div class="fn-card fc-green">
+                  <div class="fn-icon ic-green">🔗</div>
+                  <div class="fn-name">CAPI + UTM Layer</div>
+                  <div class="fn-sub">Signal integrity mandate</div>
+                </div>
+                <div class="fn-tooltip"><strong>Signal Foundation</strong>Conversion API integration recovers 20%+ of lost conversion data. Universal UTM taxonomy enables true cross-platform deduplication.</div>
+              </div>
+              <div class="fn-connector c-green"></div>
+              <div class="fn">
+                <div class="fn-card fc-green">
+                  <div class="fn-icon ic-green">📊</div>
+                  <div class="fn-name">Google Sheets</div>
+                  <div class="fn-sub">Master data repository</div>
+                </div>
+                <div class="fn-tooltip"><strong>Supermetrics / Coupler.io</strong>All platform data lands in a structured Google Sheets workbook. Columns mapped: campaign, ad set, creative, spend, impressions, clicks, conversions, CPL.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VERTICAL CONNECTOR -->
+        <div class="vc-wrap"><div class="vc vc-green"></div></div>
+
+        <!-- LANE 2: AI ANALYSIS -->
+        <div class="swimlane">
+          <div class="lane-label">
+            <div class="lane-label-inner">
+              <div class="lane-dot" style="background:#e040fb"></div>
+              AI<br>Analysis
+            </div>
+          </div>
+          <div class="lane-body">
+            <div class="fn-group">
+              <div class="fn">
+                <div class="fn-card fc-mag">
+                  <div class="fn-icon ic-mag">
+                    <div style="width:22px;height:22px;border-radius:5px;background:#6c3fc5;display:grid;place-items:center;font:900 11px/1 var(--font);color:#fff">G</div>
+                  </div>
+                  <div class="fn-name">Genspark AI</div>
+                  <div class="fn-sub">Anomaly detection</div>
+                </div>
+                <div class="fn-tooltip"><strong>Genspark Anomaly Engine</strong>Scans all data for: CPM deviation over 20% from 30-day average, CTR drop over 15% week-over-week, spend pacing variance over 10%, conversion rate shift over 25%.</div>
+              </div>
+              <div class="fn-connector c-mag"></div>
+              <div class="fn">
+                <div class="fn-card fc-mag">
+                  <div class="fn-icon ic-mag"><img src="logo-openai.png" alt="ChatGPT"></div>
+                  <div class="fn-name">ChatGPT</div>
+                  <div class="fn-sub">Narrative + QA</div>
+                </div>
+                <div class="fn-tooltip"><strong>Custom GPT: Gaming Ads QA</strong>Reads anomaly flags and generates plain-English explanations, severity ratings (Low/Medium/High), root cause hypotheses, and recommended actions. 60-70% QA time reduction.</div>
+              </div>
+              <div class="fn-connector c-mag"></div>
+              <div class="fn">
+                <div class="fn-card fc-mag">
+                  <div class="fn-icon ic-mag"><img src="logo-perplexity.png" alt="Perplexity"></div>
+                  <div class="fn-name">Perplexity AI</div>
+                  <div class="fn-sub">Competitive context</div>
+                </div>
+                <div class="fn-tooltip"><strong>Real-Time Market Intelligence</strong>Perplexity enriches anomaly reports with competitive context: industry CPM benchmarks, competitor creative shifts, market-level demand signals.</div>
+              </div>
+              <div class="fn-connector c-mag"></div>
+              <div class="fn">
+                <div class="fn-card fc-mag">
+                  <div class="fn-icon ic-mag">
+                    <div style="width:22px;height:22px;border-radius:5px;background:#0a2540;display:grid;place-items:center;font:900 11px/1 var(--font);color:#fff">C</div>
+                  </div>
+                  <div class="fn-name">Comet Agent</div>
+                  <div class="fn-sub">Agentic pacing</div>
+                  <div class="fn-badge">Agentic</div>
+                </div>
+                <div class="fn-tooltip"><strong>Comet Agentic Browser</strong>Autonomously logs into LinkedIn Ads, reads pacing data cell-by-cell, maps to the master spreadsheet, calculates daily required spend, and writes results back to Google Sheets.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VERTICAL CONNECTOR -->
+        <div class="vc-wrap"><div class="vc vc-mag"></div></div>
+
+        <!-- LANE 3: AUTOMATION AND ROUTING -->
+        <div class="swimlane">
+          <div class="lane-label">
+            <div class="lane-label-inner">
+              <div class="lane-dot" style="background:#00c9a7"></div>
+              Automation<br>and Routing
+            </div>
+          </div>
+          <div class="lane-body">
+            <div class="fn-group">
+              <div class="fn">
+                <div class="fn-card fc-teal">
+                  <div class="fn-icon ic-teal"><img src="logo-zapier.png" alt="Zapier"></div>
+                  <div class="fn-name">Zapier</div>
+                  <div class="fn-sub">Alert routing</div>
+                </div>
+                <div class="fn-tooltip"><strong>Budget Monitoring Alerts</strong>Level 2 alert (10-20% variance): Slack DM to campaign manager. Level 3 alert (over 20% variance): Slack DM to director + email to client lead. All automated, no human trigger needed.</div>
+              </div>
+              <div class="fn-connector c-teal"></div>
+              <div class="fn">
+                <div class="fn-card fc-teal">
+                  <div class="fn-icon ic-teal"><img src="logo-make.png" alt="Make"></div>
+                  <div class="fn-name">Make</div>
+                  <div class="fn-sub">Pipeline orchestration</div>
+                </div>
+                <div class="fn-tooltip"><strong>Multi-Step Automation</strong>Make handles complex data transformation: API response parsing, multi-platform data merging, conditional logic routing, and Looker Studio data push.</div>
+              </div>
+              <div class="fn-connector c-teal"></div>
+              <div class="fn">
+                <div class="fn-card fc-teal">
+                  <div class="fn-icon ic-teal"><img src="logo-notion.png" alt="Notion"></div>
+                  <div class="fn-name">Notion AI</div>
+                  <div class="fn-sub">SOP and test log</div>
+                </div>
+                <div class="fn-tooltip"><strong>MASTER Automation Directory</strong>Every automation is logged with: task name, goal, how-to, date tested, date implemented, main POC. Prevents duplicate work and creates team accountability.</div>
+              </div>
+              <div class="fn-connector c-teal"></div>
+              <div class="fn">
+                <div class="fn-card fc-teal">
+                  <div class="fn-icon ic-teal">
+                    <div style="width:22px;height:22px;border-radius:5px;background:#0d3535;display:grid;place-items:center;font:900 10px/1 var(--font);color:#00e676">L</div>
+                  </div>
+                  <div class="fn-name">Lyra GPT</div>
+                  <div class="fn-sub">Prompt standardization</div>
+                </div>
+                <div class="fn-tooltip"><strong>Custom Prompt Optimizer</strong>4-D methodology: Deconstruct intent, Diagnose gaps, Develop optimal technique, Deliver structured prompt. Ensures consistent AI output quality across all team members.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VERTICAL CONNECTOR -->
+        <div class="vc-wrap"><div class="vc"></div></div>
+
+        <!-- LANE 4: DELIVERY -->
+        <div class="swimlane">
+          <div class="lane-label">
+            <div class="lane-label-inner">
+              <div class="lane-dot" style="background:#0d3535"></div>
+              Delivery<br>and Action
+            </div>
+          </div>
+          <div class="lane-body">
+            <div class="fn-group">
+              <div class="fn">
+                <div class="fn-card fc-dark">
+                  <div class="fn-icon ic-dark">💬</div>
+                  <div class="fn-name">Slack Alert</div>
+                  <div class="fn-sub">Monday 8am auto-delivery</div>
+                  <div class="fn-badge b-green">Auto</div>
+                </div>
+                <div class="fn-tooltip"><strong>Automated Monday Briefing</strong>Full performance report delivered to Slack every Monday at 8am. Includes anomaly flags, pacing status, and recommended actions. Zero human preparation required.</div>
+              </div>
+              <div class="fn-connector"></div>
+              <div class="fn">
+                <div class="fn-card fc-dark">
+                  <div class="fn-icon ic-dark"><img src="logo-looker.png" alt="Looker" style="filter:brightness(0) invert(1)"></div>
+                  <div class="fn-name">Looker Studio</div>
+                  <div class="fn-sub">Client dashboard</div>
+                </div>
+                <div class="fn-tooltip"><strong>Blended MER Dashboard</strong>Looker Studio dashboard layers platform metrics with UTM-based CRM signals. Media Efficiency Ratio (MER) is the north-star metric. Updated automatically, always live.</div>
+              </div>
+              <div class="fn-connector"></div>
+              <div class="fn">
+                <div class="fn-card fc-dark">
+                  <div class="fn-icon ic-dark">🧠</div>
+                  <div class="fn-name">Strategy Time</div>
+                  <div class="fn-sub">Freed bandwidth</div>
+                  <div class="fn-badge b-green">+70%</div>
+                </div>
+                <div class="fn-tooltip"><strong>The Real Output</strong>Reclaimed time is reinvested into: creative strategy, audience architecture, client ideation, and proactive recommendations. This is what retained Epic Games for 8 years.</div>
+              </div>
+              <div class="fn-connector"></div>
+              <div class="fn">
+                <div class="fn-card" style="background:linear-gradient(135deg,#0d3535,#1a7a6e);border-color:var(--green)">
+                  <div class="fn-icon" style="background:rgba(0,230,118,.15)">🏆</div>
+                  <div class="fn-name" style="color:#fff">Client Retention</div>
+                  <div class="fn-sub" style="color:rgba(255,255,255,.55)">Epic Games · 8 years</div>
+                </div>
+                <div class="fn-tooltip"><strong>The Business Outcome</strong>8-year Epic Games retention — longest in Moonrock agency history. Proactive strategy, not reactive execution, is what keeps clients. AI made proactive strategy possible at scale.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /swimlane-wrap -->
+
+      <!-- LEGEND -->
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#00e676"></div>Data input layer</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e040fb"></div>AI analysis layer</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00c9a7"></div>Automation and routing layer</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0d3535"></div>Delivery and action layer</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f5d0fc;border:1px solid #e040fb"></div>Hover any node for detail</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- PANEL 2: WORKFLOW BREAKDOWN -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-workflows">
+    <div class="sec-title">Four Core Workflows</div>
+    <div class="wf-grid">
+
+      <!-- WF1 -->
+      <div class="wf-card reveal">
+        <div class="wf-card-head">
+          <div class="wf-num" style="background:#e8fdf2;color:#00c853">01</div>
+          <div class="wf-card-title">Automated Reporting Pipeline</div>
+        </div>
+        <div class="wf-card-body">
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e8fdf2;color:#00c853">1</div>
+            <div>Sunday 11pm: All platform APIs sync to Google Sheets master workbook via Supermetrics/Coupler.io</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e8fdf2;color:#00c853">2</div>
+            <div>Genspark AI scans for anomalies against configured thresholds across all campaigns</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e8fdf2;color:#00c853">3</div>
+            <div>ChatGPT Custom GPT generates plain-English anomaly narrative with severity ratings and recommended actions</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e8fdf2;color:#00c853">4</div>
+            <div>Make orchestrates data push to Looker Studio dashboard and formats executive summary</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e8fdf2;color:#00c853">5</div>
+            <div>Zapier delivers full report to Slack at Monday 8am. Zero human preparation required.</div>
+          </div>
+        </div>
+        <div class="wf-tools">
+          <div class="wf-tool-chip"><img src="logo-openai.png" alt="">ChatGPT</div>
+          <div class="wf-tool-chip"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#6c3fc5;font:700 8px/14px var(--font);color:#fff;text-align:center">G</span>Genspark</div>
+          <div class="wf-tool-chip"><img src="logo-zapier.png" alt="">Zapier</div>
+          <div class="wf-tool-chip"><img src="logo-make.png" alt="">Make</div>
+          <div class="wf-tool-chip"><img src="logo-looker.png" alt="">Looker</div>
+        </div>
+      </div>
+
+      <!-- WF2 -->
+      <div class="wf-card reveal">
+        <div class="wf-card-head">
+          <div class="wf-num" style="background:#fdf0ff;color:#e040fb">02</div>
+          <div class="wf-card-title">Agentic Pacing Workflow (Comet)</div>
+        </div>
+        <div class="wf-card-body">
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#fdf0ff;color:#e040fb">1</div>
+            <div>Comet agent authenticates to LinkedIn Ads via 1Password passkey integration (no stored credentials)</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#fdf0ff;color:#e040fb">2</div>
+            <div>Agent reads pacing data cell-by-cell: campaign name, daily budget, spend-to-date, days remaining</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#fdf0ff;color:#e040fb">3</div>
+            <div>Maps each row to the master Google Sheets workbook and calculates daily required spend vs. actual</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#fdf0ff;color:#e040fb">4</div>
+            <div>Flags campaigns over 10% variance as "At Risk." Flags campaigns over 20% as "Critical."</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#fdf0ff;color:#e040fb">5</div>
+            <div>Delivers formatted pacing report via Slack DM to campaign manager before 9:30am daily</div>
+          </div>
+        </div>
+        <div class="wf-tools">
+          <div class="wf-tool-chip"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#0a2540;font:700 8px/14px var(--font);color:#fff;text-align:center">C</span>Comet</div>
+          <div class="wf-tool-chip">💬 Slack</div>
+          <div class="wf-tool-chip">📊 Google Sheets</div>
+        </div>
+      </div>
+
+      <!-- WF3 -->
+      <div class="wf-card reveal">
+        <div class="wf-card-head">
+          <div class="wf-num" style="background:#e6f9f6;color:#00c9a7">03</div>
+          <div class="wf-card-title">AI-Powered QA System</div>
+        </div>
+        <div class="wf-card-body">
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e6f9f6;color:#00c9a7">1</div>
+            <div>Campaign manager exports campaign settings to structured format and submits to Gaming Ads QA GPT</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e6f9f6;color:#00c9a7">2</div>
+            <div>Custom GPT checks against 40-point QA checklist: targeting, bidding, creative specs, tracking, naming conventions</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e6f9f6;color:#00c9a7">3</div>
+            <div>GPT outputs structured error report: issue type, severity, exact location, recommended fix</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e6f9f6;color:#00c9a7">4</div>
+            <div>Human reviews and approves fixes. No AI publishes directly. Human-in-the-loop required.</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#e6f9f6;color:#00c9a7">5</div>
+            <div>Result: 60-70% QA time reduction. 90%+ error detection rate maintained.</div>
+          </div>
+        </div>
+        <div class="wf-tools">
+          <div class="wf-tool-chip"><img src="logo-openai.png" alt="">QA Custom GPT</div>
+          <div class="wf-tool-chip"><img src="logo-notion.png" alt="">Notion QA Log</div>
+        </div>
+      </div>
+
+      <!-- WF4 -->
+      <div class="wf-card reveal">
+        <div class="wf-card-head">
+          <div class="wf-num" style="background:#fff3e0;color:#ff9800">04</div>
+          <div class="wf-card-title">AI-Driven Creative Testing Loop</div>
+        </div>
+        <div class="wf-card-body">
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#fff3e0;color:#ff9800">1</div>
+            <div>Lyra GPT generates structured creative brief from audience data, competitive intelligence, and past performance signals</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#fff3e0;color:#ff9800">2</div>
+            <div>ChatGPT produces 3-5 ad copy variants per format. Human creative team reviews and selects before any goes live.</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#fff3e0;color:#ff9800">3</div>
+            <div>Approved variants launch in structured A/B test. Meta Advantage+ and Google Ads Rules monitor performance thresholds.</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-num" style="background:#fff3e0;color:#ff9800">4</div>
+            <div>Winning signals tagged in Notion AI library and fed back into next brief cycle. Every iteration starts smarter.</div>
+          </div>
+        </div>
+        <div class="wf-tools">
+          <div class="wf-tool-chip"><img src="logo-openai.png" alt="">ChatGPT</div>
+          <div class="wf-tool-chip"><img src="logo-notion.png" alt="">Notion AI</div>
+          <div class="wf-tool-chip"><img src="logo-meta.png" alt="">Meta Advantage+</div>
+          <div class="wf-tool-chip"><img src="logo-googleads.png" alt="">Google Rules</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- PANEL 3: AI TOOL STACK -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-tools">
+    <div class="sec-title">The Full AI Tool Stack</div>
+    <div class="tool-grid">
+
+      <!-- COLUMN 1: INTELLIGENCE -->
+      <div class="tool-col reveal">
+        <div class="tool-col-head" style="background:linear-gradient(135deg,#fdf0ff,#f5d0fc);color:#9c27b0">
+          Analysis and Intelligence
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-box"><img src="logo-openai.png" alt="ChatGPT"></div>
+          <div>
+            <div class="tool-info-name">ChatGPT / Custom GPTs</div>
+            <div class="tool-info-use">QA automation, brief writing, anomaly narrative, ad copy generation</div>
+            <div class="tool-info-tag" style="background:#fdf0ff;color:#9c27b0">Gaming Ads QA GPT + Lyra</div>
+          </div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-ph" style="background:#6c3fc5">G</div>
+          <div>
+            <div class="tool-info-name">Genspark AI</div>
+            <div class="tool-info-use">Spreadsheet analysis, anomaly detection, cross-dataset correlation, agentic browsing</div>
+            <div class="tool-info-tag" style="background:#f0ebff;color:#6c3fc5">Reporting + Pacing Agent</div>
+          </div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-box"><img src="logo-perplexity.png" alt="Perplexity"></div>
+          <div>
+            <div class="tool-info-name">Perplexity AI</div>
+            <div class="tool-info-use">Real-time competitive research, audience lookups, market intelligence</div>
+            <div class="tool-info-tag" style="background:#fdf0ff;color:#9c27b0">Research and Planning</div>
+          </div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-box"><img src="logo-semrush.png" alt="Semrush"></div>
+          <div>
+            <div class="tool-info-name">Semrush</div>
+            <div class="tool-info-use">SEO keyword tracking, competitor gap analysis, content opportunity identification</div>
+            <div class="tool-info-tag" style="background:#fdf0ff;color:#9c27b0">SEO and Competitive Intel</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 2: AUTOMATION -->
+      <div class="tool-col reveal">
+        <div class="tool-col-head" style="background:linear-gradient(135deg,#e6f9f6,#b2f0e8);color:#00796b">
+          Automation and Orchestration
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-box"><img src="logo-zapier.png" alt="Zapier"></div>
+          <div>
+            <div class="tool-info-name">Zapier</div>
+            <div class="tool-info-use">Budget monitoring alerts, QA workflow routing, cross-platform triggers, Slack notifications</div>
+            <div class="tool-info-tag" style="background:#e6f9f6;color:#00796b">Budget Alert System</div>
+          </div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-box"><img src="logo-make.png" alt="Make"></div>
+          <div>
+            <div class="tool-info-name">Make (Integromat)</div>
+            <div class="tool-info-use">Complex multi-step automations, API integrations, data transformation pipelines</div>
+            <div class="tool-info-tag" style="background:#e6f9f6;color:#00796b">Reporting Pipeline</div>
+          </div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-ph" style="background:#0a2540">C</div>
+          <div>
+            <div class="tool-info-name">Comet (Perplexity)</div>
+            <div class="tool-info-use">Agentic browser automation, LinkedIn pacing, Google Sheets updates, Slack DM delivery</div>
+            <div class="tool-info-tag" style="background:#e6f9f6;color:#00796b">Agentic Pacing Workflow</div>
+          </div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-box"><img src="logo-looker.png" alt="Looker"></div>
+          <div>
+            <div class="tool-info-name">Looker Studio</div>
+            <div class="tool-info-use">Automated dashboards, executive reporting, client-facing interactive views, MER tracking</div>
+            <div class="tool-info-tag" style="background:#e6f9f6;color:#00796b">Client Dashboards</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: DOCUMENTATION + NATIVE -->
+      <div class="tool-col reveal">
+        <div class="tool-col-head" style="background:linear-gradient(135deg,#e8f4fd,#b3d9f7);color:#0d3535">
+          Documentation and Native AI
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-box"><img src="logo-notion.png" alt="Notion"></div>
+          <div>
+            <div class="tool-info-name">Notion AI</div>
+            <div class="tool-info-use">MASTER Automation Directory, SOPs, test logs, prompt library, team knowledge base</div>
+            <div class="tool-info-tag" style="background:#e8f4fd;color:#0d3535">Automation Directory</div>
+          </div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-ph" style="background:#0d3535;color:#00e676">L</div>
+          <div>
+            <div class="tool-info-name">Lyra (Custom GPT)</div>
+            <div class="tool-info-use">Prompt optimization across all AI tools. 4-D methodology: Deconstruct, Diagnose, Develop, Deliver</div>
+            <div class="tool-info-tag" style="background:#e8f4fd;color:#0d3535">Prompt Standardization</div>
+          </div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-box"><img src="logo-googleads.png" alt="Google Ads"></div>
+          <div>
+            <div class="tool-info-name">Google Ads Automated Rules</div>
+            <div class="tool-info-use">Bid adjustments, budget pacing alerts, creative pause rules. Native, ToS-compliant.</div>
+            <div class="tool-info-tag" style="background:#e8f4fd;color:#0d3535">Native Automation</div>
+          </div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-logo-box"><img src="logo-meta.png" alt="Meta"></div>
+          <div>
+            <div class="tool-info-name">Meta Advantage+ and Auto Rules</div>
+            <div class="tool-info-use">AI-driven audience expansion, creative optimization, budget reallocation, pacing alerts</div>
+            <div class="tool-info-tag" style="background:#e8f4fd;color:#0d3535">Native AI Optimization</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- PANEL 4: IMPACT AND TIMELINE -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-impact">
+    <div class="sec-title">Impact at a Glance</div>
+    <div class="impact-grid">
+      <div class="impact-card reveal">
+        <div class="impact-num" style="color:#00c853">70%</div>
+        <div class="impact-label">Team hours reclaimed from execution tasks</div>
+        <div class="impact-ctx">Reporting, QA, bid adjustments, pacing checks</div>
+        <div class="impact-tag" style="background:#e8fdf2;color:#00c853">Redirected to strategy</div>
+      </div>
+      <div class="impact-card reveal">
+        <div class="impact-num" style="color:#e040fb">60-70%</div>
+        <div class="impact-label">QA time reduction via Gaming Ads QA GPT</div>
+        <div class="impact-ctx">90%+ error detection rate maintained</div>
+        <div class="impact-tag" style="background:#fdf0ff;color:#e040fb">Quality preserved</div>
+      </div>
+      <div class="impact-card reveal">
+        <div class="impact-num" style="color:#00c9a7">30min</div>
+        <div class="impact-label">Daily execution check, down from a full day</div>
+        <div class="impact-ctx">Automated pipeline replaced manual reporting</div>
+        <div class="impact-tag" style="background:#e6f9f6;color:#00796b">Fully automated</div>
+      </div>
+      <div class="impact-card reveal">
+        <div class="impact-num" style="color:#0d3535">0.894</div>
+        <div class="impact-label">LinkedIn-to-session correlation surfaced by AI analysis</div>
+        <div class="impact-ctx">Validated campaign effectiveness in minutes vs. hours</div>
+        <div class="impact-tag" style="background:#eef5f8;color:#0d3535">AI-surfaced insight</div>
+      </div>
+      <div class="impact-card reveal">
+        <div class="impact-num" style="color:#ff9800">$7.66</div>
+        <div class="impact-label">Best-performing targeting type identified (Groups, per session)</div>
+        <div class="impact-ctx">vs. $88.64 for underperforming region. AI flagged reallocation.</div>
+        <div class="impact-tag" style="background:#fff3e0;color:#ff9800">Budget reallocation</div>
+      </div>
+      <div class="impact-card reveal" style="background:linear-gradient(135deg,var(--dark),var(--dark-mid));border-color:var(--dark)">
+        <div class="impact-num" style="color:#00e676">8yr</div>
+        <div class="impact-label" style="color:rgba(255,255,255,.8)">Epic Games retained, longest in agency history</div>
+        <div class="impact-ctx" style="color:rgba(255,255,255,.45)">Proactive strategy enabled by freed bandwidth</div>
+        <div class="impact-tag" style="background:rgba(0,230,118,.15);color:#00e676">The real outcome</div>
+      </div>
+    </div>
+
+    <div class="timeline reveal">
+      <div class="timeline-title">Implementation Timeline</div>
+      <div class="tl-row">
+        <div class="tl-time">Week 1-2</div>
+        <div class="tl-dot-col"><div class="tl-dot" style="background:#00c853"></div></div>
+        <div class="tl-content">
+          <div class="tl-content-title">Time Audit and Signal Foundation</div>
+          <div class="tl-content-desc">Audited where 100% of team hours were going. Mandated CAPI integration and UTM taxonomy standardization across all platforms. Identified reporting, QA, and pacing as the 70% time drain.</div>
+          <div class="tl-tools">
+            <div class="tl-chip" style="background:#e8fdf2;color:#00c853">CAPI Setup</div>
+            <div class="tl-chip" style="background:#e8fdf2;color:#00c853">UTM Taxonomy</div>
+          </div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-time">Week 3-4</div>
+        <div class="tl-dot-col"><div class="tl-dot" style="background:#e040fb"></div></div>
+        <div class="tl-content">
+          <div class="tl-content-title">Automated Reporting Pipeline Live</div>
+          <div class="tl-content-desc">Built the full 7-step reporting automation: API sync, Genspark anomaly detection, ChatGPT narrative generation, Make orchestration, Looker Studio dashboard, Zapier Slack delivery. First automated Monday report delivered.</div>
+          <div class="tl-tools">
+            <div class="tl-chip" style="background:#fdf0ff;color:#9c27b0">Genspark</div>
+            <div class="tl-chip" style="background:#fdf0ff;color:#9c27b0">ChatGPT</div>
+            <div class="tl-chip" style="background:#fdf0ff;color:#9c27b0">Make</div>
+            <div class="tl-chip" style="background:#fdf0ff;color:#9c27b0">Zapier</div>
+          </div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-time">Week 5-6</div>
+        <div class="tl-dot-col"><div class="tl-dot" style="background:#00c9a7"></div></div>
+        <div class="tl-content">
+          <div class="tl-content-title">QA GPT Rollout and Pacing Automation</div>
+          <div class="tl-content-desc">Gaming Ads QA Custom GPT deployed with 40-point checklist. 30-day rollout with human oversight. Comet agentic pacing workflow tested in sandbox mode (read-only). LinkedIn pacing reports automated.</div>
+          <div class="tl-tools">
+            <div class="tl-chip" style="background:#e6f9f6;color:#00796b">QA GPT</div>
+            <div class="tl-chip" style="background:#e6f9f6;color:#00796b">Comet Sandbox</div>
+          </div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-time">Week 7-8</div>
+        <div class="tl-dot-col"><div class="tl-dot" style="background:#0d3535"></div></div>
+        <div class="tl-content">
+          <div class="tl-content-title">Lyra Prompt System and Team Adoption</div>
+          <div class="tl-content-desc">Lyra custom GPT deployed for prompt standardization. MASTER Automation Directory built in Notion. Team trained on all workflows. Comet moved from sandbox to read-only to light-write mode. Team becomes advocates, not resistors.</div>
+          <div class="tl-tools">
+            <div class="tl-chip" style="background:#eef5f8;color:#0d3535">Lyra GPT</div>
+            <div class="tl-chip" style="background:#eef5f8;color:#0d3535">Notion Directory</div>
+            <div class="tl-chip" style="background:#eef5f8;color:#0d3535">Team Training</div>
+          </div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-time">Ongoing</div>
+        <div class="tl-dot-col"><div class="tl-dot" style="background:#00e676"></div></div>
+        <div class="tl-content">
+          <div class="tl-content-title">Creative Testing Loop and Continuous Improvement</div>
+          <div class="tl-content-desc">AI-driven creative testing workflow operational. Winning signals fed back into Notion library. Execution check reduced to 30 minutes daily. Freed bandwidth reinvested into proactive client strategy. Epic Games retained for 8 years.</div>
+          <div class="tl-tools">
+            <div class="tl-chip" style="background:#e8fdf2;color:#00c853">Creative Loop</div>
+            <div class="tl-chip" style="background:#e8fdf2;color:#00c853">30min Daily Check</div>
+            <div class="tl-chip" style="background:#e8fdf2;color:#00c853">Epic Games 8yr</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="doc-footer">
+  <div><strong>Nickolaus Trevino</strong> · VP of Media Candidate · PX.com · Internal Reference</div>
+  <div>Moonrock Media Team AI Operationalization · 2024-2025</div>
+</footer>
+
+<script>
+(() => {
+  // Scroll progress
+  const spb = document.getElementById('spb');
+  const updateProgress = () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    spb.style.width = (max > 0 ? Math.min(100, scrollY / max * 100) : 0) + '%';
+  };
+  addEventListener('scroll', updateProgress, { passive: true });
+  addEventListener('resize', updateProgress);
+  updateProgress();
+
+  // Bubble generator
+  const bubblesEl = document.getElementById('bubbles');
+  const bubbleData = [
+    {w:80,h:80,t:10,l:5,delay:0,dur:7},
+    {w:50,h:50,t:20,l:15,delay:1,dur:9},
+    {w:120,h:120,t:5,l:30,delay:2,dur:8},
+    {w:40,h:40,t:40,l:50,delay:.5,dur:6},
+    {w:90,h:90,t:15,l:65,delay:3,dur:10},
+    {w:60,h:60,t:30,l:75,delay:1.5,dur:7},
+    {w:100,h:100,t:5,l:85,delay:2.5,dur:9},
+    {w:35,h:35,t:45,l:92,delay:0.8,dur:8},
+    {w:70,h:70,t:20,l:45,delay:4,dur:11},
+    {w:45,h:45,t:35,l:22,delay:2,dur:6},
+  ];
+  bubbleData.forEach(b => {
+    const s = document.createElement('span');
+    s.style.cssText = `width:${b.w}px;height:${b.h}px;top:${b.t}%;left:${b.l}%;animation-delay:${b.delay}s;animation-duration:${b.dur}s`;
+    // alternate colors
+    if (b.w > 80) s.style.background = '#00e676';
+    if (b.w > 100) { s.style.background = '#e040fb'; s.style.opacity = '.12'; }
+    bubblesEl.appendChild(s);
+  });
+
+  // Tab switching
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.panel');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      tabBtns.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + target).classList.add('active');
+      // trigger reveals in new panel
+      triggerReveals();
+    });
+  });
+
+  // Reveal on scroll
+  const revealEls = () => document.querySelectorAll('.reveal:not(.vis)');
+  const triggerReveals = () => {
+    revealEls().forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < innerHeight - 40) el.classList.add('vis');
+    });
+  };
+  addEventListener('scroll', triggerReveals, { passive: true });
+  triggerReveals();
+  setTimeout(triggerReveals, 200);
+})();
+</script>
+</body>
+</html>

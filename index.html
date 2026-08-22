@@ -105,7 +105,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--muted);min-height:
 }
 
 /* ── SWIMLANE ── */
-.swimlane-wrap{min-width:900px}
+.swimlane-wrap{width:100%;min-width:760px}
 .swimlane{display:grid;grid-template-columns:120px 1fr;gap:0;margin-bottom:0}
 .swimlane+.swimlane{border-top:1px solid rgba(255,255,255,.06)}
 .lane-label{
@@ -122,9 +122,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--muted);min-height:
 .lane-body{padding:20px 0 20px 20px;display:flex;align-items:center;gap:0;position:relative}
 
 /* ── FLOW NODES ── */
-.fn-group{display:flex;align-items:center;gap:0;position:relative}
+.fn-group{display:flex;align-items:center;gap:0;position:relative;width:100%}
 .fn-connector{
-  width:32px;height:2px;background:var(--border);position:relative;flex-shrink:0;
+  flex:1 1 32px;min-width:28px;height:2px;background:var(--border);position:relative;
 }
 .fn-connector::after{
   content:'';position:absolute;right:-5px;top:-4px;
@@ -139,15 +139,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--muted);min-height:
 
 .fn{
   display:flex;flex-direction:column;align-items:center;gap:6px;
-  cursor:pointer;position:relative;
+  cursor:pointer;position:relative;flex-shrink:0;
   transition:transform .2s;
 }
 .fn:hover{transform:translateY(-3px)}
 .fn:hover .fn-card{box-shadow:0 8px 24px rgba(0,0,0,.4);border-color:var(--cobalt)}
 .fn-card{
-  width:96px;padding:11px 9px;border-radius:10px;
+  width:150px;padding:16px 14px;border-radius:12px;
   background:var(--surface-2);border:1.5px solid var(--border);
-  display:flex;flex-direction:column;align-items:center;gap:5px;
+  display:flex;flex-direction:column;align-items:center;gap:7px;
   transition:box-shadow .2s,border-color .2s;
   position:relative;
 }
@@ -158,20 +158,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--muted);min-height:
 .fn-card.fc-trigger{background:var(--surface-2);border-color:var(--cobalt)}
 
 .fn-icon{
-  width:32px;height:32px;border-radius:8px;
-  display:grid;place-items:center;font-size:16px;
+  width:38px;height:38px;border-radius:9px;
+  display:grid;place-items:center;font-size:18px;
   flex-shrink:0;
 }
-.fn-icon img{width:22px;height:22px;object-fit:contain}
+.fn-icon img{width:26px;height:26px;object-fit:contain}
 .fn-icon.ic-dark{background:rgba(255,255,255,.12)}
 .fn-icon.ic-green{background:rgba(94,232,181,.15)}
 .fn-icon.ic-mag{background:rgba(156,124,255,.15)}
 .fn-icon.ic-teal{background:rgba(47,111,255,.15)}
 .fn-icon.ic-white{background:rgba(255,255,255,.9)}
 
-.fn-name{font:700 10px/1.2 var(--font);text-align:center;color:#fff}
+.fn-name{font:700 12px/1.25 var(--font);text-align:center;color:#fff}
 .fn-card.fc-dark .fn-name,.fn-card.fc-trigger .fn-name{color:#fff}
-.fn-sub{font:400 9px/1.2 var(--font);text-align:center;color:rgba(255,255,255,.5)}
+.fn-sub{font:400 10.5px/1.3 var(--font);text-align:center;color:rgba(255,255,255,.5)}
 .fn-card.fc-dark .fn-sub,.fn-card.fc-trigger .fn-sub{color:rgba(255,255,255,.55)}
 
 .fn-badge{
@@ -199,6 +199,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--muted);min-height:
 }
 .fn:hover .fn-tooltip{opacity:1}
 .fn-tooltip strong{color:var(--green);display:block;margin-bottom:4px;font-size:10.5px}
+
+/* First row's tooltips have no room above the diagram, so they drop below the node instead */
+.fn-group-below .fn-tooltip{bottom:auto;top:calc(100% + 10px)}
+.fn-group-below .fn-tooltip::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--surface-2)}
 
 /* ── VERTICAL CONNECTOR ── */
 .vc-wrap{display:flex;justify-content:center;align-items:center;height:20px;padding-left:120px}
@@ -408,7 +412,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--muted);min-height:
             </div>
           </div>
           <div class="lane-body">
-            <div class="fn-group">
+            <div class="fn-group fn-group-below">
               <div class="fn" tabindex="0">
                 <div class="fn-card fc-trigger">
                   <div class="fn-icon ic-dark">📡</div>
